@@ -6,3 +6,7 @@
 	path = thirdparty/glfw
 	url = https://github.com/glfw/glfw.git
 	branch = master
+[submodule "thirdparty/cxxopts"]
+	path = thirdparty/cxxopts
+	url = https://github.com/jarro2783/cxxopts
+	branch = master

@@ -4,12 +4,22 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug",
+      "name": "GLFW",
       "program": "${command:cmake.launchTargetPath}",
-      "args": [],
+      "args": ["--platform=glfw"],
       "cwd": "${workspaceFolder}",
       "internalConsoleOptions": "neverOpen",
       "console": "integratedTerminal"
-    }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Win32",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": ["--platform=win32"],
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "console": "integratedTerminal"
+    },
   ]
 }

@@ -19,6 +19,16 @@ set(
 
 set(
   learn_d3d12_private_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/application.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/glfw_application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/glfw_application.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/win32_application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/win32_application.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_macros.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_renderer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
 )
 
@@ -31,5 +41,11 @@ add_executable(LearnD3d12
 target_link_libraries(LearnD3d12
   PRIVATE
     spdlog::spdlog
+    cxxopts::cxxopts
     glfw
 )
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  set_target_properties(LearnD3d12 PROPERTIES
+    WIN32_EXECUTABLE 1)
+endif()
