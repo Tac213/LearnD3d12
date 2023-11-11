@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
 project(LearnD3d12 VERSION 0.1.0)
 
+add_subdirectory(thirdparty)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -24,4 +26,10 @@ set(
 add_executable(LearnD3d12
   ${learn_d3d12_public_files}
   ${learn_d3d12_private_files}
+)
+
+target_link_libraries(LearnD3d12
+  PRIVATE
+    spdlog::spdlog
+    glfw
 )
