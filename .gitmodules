@@ -10,3 +10,7 @@
 	path = thirdparty/cxxopts
 	url = https://github.com/jarro2783/cxxopts
 	branch = master
+[submodule "thirdparty/DirectX-Headers"]
+	path = thirdparty/DirectX-Headers
+	url = https://github.com/microsoft/DirectX-Headers.git
+	branch = main

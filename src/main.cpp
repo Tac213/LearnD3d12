@@ -40,7 +40,8 @@ int main(int argc, char** argv)
     cxxopts::Options options("LearnD3d12", "A D3D12 learning program.");
     // clang-format off
     options.add_options()
-        ("p,platform", "Application platform, win32 or glfw.", cxxopts::value<std::string>()->default_value("glfw"));
+        ("p,platform", "Application platform, win32 or glfw.", cxxopts::value<std::string>()->default_value("glfw"))
+        ("v,variant", "Renderer variant.", cxxopts::value<std::string>()->default_value("HelloTriangle"));
     // clang-format on
     cxxopts::ParseResult result;
     try
@@ -54,7 +55,11 @@ int main(int argc, char** argv)
     }
 
     learn_d3d12::LogManager::get_instance().initialize();
-    auto renderer = std::make_shared<learn_d3d12::D3d12Renderer>(1600, 900, "Learn D3D12");
+    auto renderer = learn_d3d12::D3d12Renderer::create(result["variant"].as<std::string>(), 1600, 900, "Learn D3D12");
+    if (!renderer)
+    {
+        return EXIT_FAILURE;
+    }
     auto app = learn_d3d12::Application::create(result["platform"].as<std::string>());
     auto return_code = app->exec(renderer);
     renderer.reset();

@@ -6,6 +6,7 @@ namespace learn_d3d12
 {
     static LRESULT CALLBACK window_proc(HWND hwnd, uint32_t message, WPARAM w_param, LPARAM l_param)
     {
+        D3d12Renderer* renderer = reinterpret_cast<D3d12Renderer*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
         switch (message)
         {
             case WM_CREATE: {
@@ -13,6 +14,13 @@ namespace learn_d3d12
                 LPCREATESTRUCT create_struct = reinterpret_cast<LPCREATESTRUCT>(l_param);
                 SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(create_struct->lpCreateParams));
             }
+                return 0;
+            case WM_PAINT:
+                if (renderer)
+                {
+                    renderer->on_update();
+                    renderer->on_render();
+                }
                 return 0;
             case WM_DESTROY:
                 PostQuitMessage(0);
@@ -53,6 +61,8 @@ namespace learn_d3d12
             instance,
             renderer.get());
 
+        renderer->on_init(_hwnd);
+
         ShowWindow(_hwnd, SW_SHOWDEFAULT);
 
         // Main loop.
@@ -66,6 +76,9 @@ namespace learn_d3d12
                 DispatchMessage(&msg);
             }
         }
+
+        renderer->on_destroy();
+
         return 0;
     }
 }  // namespace learn_d3d12

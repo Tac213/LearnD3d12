@@ -1,7 +1,8 @@
 #pragma once
 
 #include "application.h"
-#include <GLFW/glfw3.h>
+
+struct GLFWwindow;
 
 namespace learn_d3d12
 {

@@ -4,7 +4,7 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "GLFW",
+      "name": "HelloTriangle(GLFW)",
       "program": "${command:cmake.launchTargetPath}",
       "args": ["--platform=glfw"],
       "cwd": "${workspaceFolder}",
@@ -14,7 +14,7 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Win32",
+      "name": "HelloTriangle(Win32)",
       "program": "${command:cmake.launchTargetPath}",
       "args": ["--platform=win32"],
       "cwd": "${workspaceFolder}",

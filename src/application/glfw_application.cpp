@@ -1,6 +1,10 @@
 #include "glfw_application.h"
 #include "../logging/log_macros.h"
 #include "../renderer/d3d12_renderer.h"
+#define GLFW_INCLUDE_NONE
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 namespace learn_d3d12
 {
@@ -40,10 +44,17 @@ namespace learn_d3d12
 
         glfwSetWindowUserPointer(_window, renderer.get());
 
+        renderer->on_init(glfwGetWin32Window(_window));
+
         while (!glfwWindowShouldClose(_window))
         {
             glfwPollEvents();
+            renderer->on_update();
+            renderer->on_render();
         }
+
+        renderer->on_destroy();
+
         return 0;
     }
 

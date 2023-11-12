@@ -28,7 +28,11 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_macros.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_renderer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/hello_triangle.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/hello_triangle.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
 )
 
@@ -46,6 +50,14 @@ target_link_libraries(LearnD3d12
 )
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  target_link_libraries(LearnD3d12
+    PRIVATE
+      d3d12.lib
+      dxgi.lib
+      d3dcompiler.lib
+      dxguid.lib
+      Microsoft::DirectX-Headers
+  )
   set_target_properties(LearnD3d12 PROPERTIES
     WIN32_EXECUTABLE 1)
 endif()
