@@ -1,4 +1,5 @@
 #include "d3d12_renderer.h"
+#include "braynzar_constant_buffers.h"
 #include "hello_triangle.h"
 #include <wrl.h>
 
@@ -21,6 +22,10 @@ namespace learn_d3d12
         if (app_type == "HelloTriangle")
         {
             renderer = std::make_shared<HelloTriangle>(width, height, name);
+        }
+        if (app_type == "BraynzarConstantBuffers")
+        {
+            renderer = std::make_shared<BraynzarConstantBuffers>(width, height, name);
         }
         return renderer;
     }

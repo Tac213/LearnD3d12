@@ -21,5 +21,25 @@
       "internalConsoleOptions": "neverOpen",
       "console": "integratedTerminal"
     },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "BraynzarConstantBuffers(GLFW)",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": ["--platform=glfw", "--variant=BraynzarConstantBuffers"],
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "BraynzarConstantBuffers(Win32)",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": ["--platform=win32", "--variant=BraynzarConstantBuffers"],
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "console": "integratedTerminal"
+    }
   ]
 }

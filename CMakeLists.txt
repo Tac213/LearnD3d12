@@ -28,6 +28,8 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_macros.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/logging/log_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/braynzar_constant_buffers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/braynzar_constant_buffers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer/d3d12_renderer.h

@@ -2,6 +2,7 @@
 #include "logging/log_manager.h"
 #include "renderer/d3d12_renderer.h"
 #include <cxxopts.hpp>
+#include <format>
 #include <iostream>
 #include <memory>
 #ifdef _WIN32
@@ -19,23 +20,8 @@ int main(int argc, char** argv)
 {
     // Parse arguments
 #ifdef _WIN32
-    int argc;
-    wchar_t** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    std::vector<char*> vargv;
-    for (size_t i = 0; i < argc; i++)
-    {
-        char arg[MAX_PATH];
-        size_t j;
-        int err = wcstombs_s(&j, arg, MAX_PATH, wargv[i], MAX_PATH);
-        if (err)
-        {
-            std::cerr << "Failed to convert args to char**, index: " << i << std::endl;
-            return err;
-        }
-        vargv.push_back(arg);
-    }
-    char** argv = vargv.data();
-    LocalFree(wargv);
+    int argc = __argc;
+    char** argv = __argv;
 #endif
     cxxopts::Options options("LearnD3d12", "A D3D12 learning program.");
     // clang-format off
@@ -55,12 +41,14 @@ int main(int argc, char** argv)
     }
 
     learn_d3d12::LogManager::get_instance().initialize();
-    auto renderer = learn_d3d12::D3d12Renderer::create(result["variant"].as<std::string>(), 1600, 900, "Learn D3D12");
+    auto variant = result["variant"].as<std::string>();
+    auto platform = result["platform"].as<std::string>();
+    auto renderer = learn_d3d12::D3d12Renderer::create(variant, 1600, 900, std::format("[{}] Learn D3D12: {}", platform, variant));
     if (!renderer)
     {
         return EXIT_FAILURE;
     }
-    auto app = learn_d3d12::Application::create(result["platform"].as<std::string>());
+    auto app = learn_d3d12::Application::create(platform);
     auto return_code = app->exec(renderer);
     renderer.reset();
     app.reset();
