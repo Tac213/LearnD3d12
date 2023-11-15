@@ -23,6 +23,9 @@ namespace learn_d3d12
 
         struct Vertex
         {
+            Vertex(float x, float y, float z, float r, float g, float b, float a)
+                : position(x, y, z)
+                , color(r, g, b, z) {}
             DirectX::XMFLOAT3 position;
             DirectX::XMFLOAT4 color;
         };
@@ -44,6 +47,8 @@ namespace learn_d3d12
         // App resources
         ComPtr<ID3D12Resource> _vertex_buffer;
         D3D12_VERTEX_BUFFER_VIEW _vertex_buffer_view;
+        ComPtr<ID3D12Resource> _index_buffer;
+        D3D12_VERTEX_BUFFER_VIEW _index_buffer_view;
 
         // Synchronization objects
         uint32_t _frame_index;
