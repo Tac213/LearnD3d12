@@ -29,6 +29,10 @@ namespace learn_d3d12
             DirectX::XMFLOAT3 position;
             DirectX::XMFLOAT4 color;
         };
+        struct ConstantBuffer
+        {
+            DirectX::XMFLOAT4 color_multiplier;
+        };
 
         // Pipeline objects
         CD3DX12_VIEWPORT _viewport;
@@ -40,6 +44,8 @@ namespace learn_d3d12
         ComPtr<ID3D12CommandQueue> _command_queue;
         ComPtr<ID3D12RootSignature> _root_signature;
         ComPtr<ID3D12DescriptorHeap> _rtv_heap;
+        ComPtr<ID3D12DescriptorHeap> _dsv_heap;
+        ComPtr<ID3D12Resource> _depth_stencil_buffer;
         ComPtr<ID3D12PipelineState> _pipeline_state;
         ComPtr<ID3D12GraphicsCommandList> _command_list;
         uint32_t _rtv_descriptor_size;
@@ -48,7 +54,10 @@ namespace learn_d3d12
         ComPtr<ID3D12Resource> _vertex_buffer;
         D3D12_VERTEX_BUFFER_VIEW _vertex_buffer_view;
         ComPtr<ID3D12Resource> _index_buffer;
-        D3D12_VERTEX_BUFFER_VIEW _index_buffer_view;
+        D3D12_INDEX_BUFFER_VIEW _index_buffer_view;
+        ComPtr<ID3D12DescriptorHeap> _main_descriptor_heaps[kFrameCount];
+        ConstantBuffer _cb_color_multiplier_data;
+        uint8_t* _cb_color_multiplier_gpu_address[kFrameCount];
 
         // Synchronization objects
         uint32_t _frame_index;
