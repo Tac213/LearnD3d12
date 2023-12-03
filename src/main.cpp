@@ -12,14 +12,14 @@
 #include <windows.h>
 #endif
 
-#ifdef _WIN32
+#ifdef LEARN_D3D12_DIST
 _Use_decl_annotations_ int WINAPI WinMain(HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)  // NOLINT(readability-identifier-naming)
 #else
 int main(int argc, char** argv)
 #endif
 {
     // Parse arguments
-#ifdef _WIN32
+#ifdef LEARN_D3D12_DIST
     int argc = __argc;
     char** argv = __argv;
 #endif

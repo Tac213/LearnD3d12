@@ -60,6 +60,11 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
       dxguid.lib
       Microsoft::DirectX-Headers
   )
-  set_target_properties(LearnD3d12 PROPERTIES
-    WIN32_EXECUTABLE 1)
+  if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    target_compile_definitions(LearnD3d12 PRIVATE
+      LEARN_D3D12_DIST=1
+    )
+    set_target_properties(LearnD3d12 PROPERTIES
+      WIN32_EXECUTABLE 1)
+  endif()
 endif()

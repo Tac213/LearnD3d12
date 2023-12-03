@@ -69,5 +69,7 @@ namespace learn_d3d12
         void _load_assets();
         void _populate_command_list();
         void _wait_for_previous_frame();
+
+        static void _debug_message_callback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID message_id, const char* description, void* context);
     };
 }  // namespace learn_d3d12

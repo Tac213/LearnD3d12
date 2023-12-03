@@ -20,7 +20,7 @@
     "**/__pycache__": true
   },
   "[cpp]": {
-    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
+    "editor.defaultFormatter": "xaver.clang-format",
     "editor.formatOnSave": true
   },
   "[c]": {

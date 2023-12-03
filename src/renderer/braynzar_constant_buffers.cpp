@@ -1,6 +1,7 @@
 #include "braynzar_constant_buffers.h"
 #include "d3d12_helper.h"
 #include <d3dcompiler.h>
+#include <iostream>
 
 namespace learn_d3d12
 {
@@ -67,10 +68,50 @@ namespace learn_d3d12
 
     void BraynzarConstantBuffers::on_update()
     {
+        // update app logic, such as moving the camera or figuring out what objects are in view
+        static float r_increment = 0.00002f;
+        static float g_increment = 0.00006f;
+        static float b_increment = 0.00009f;
+
+        _cb_color_multiplier_data.color_multiplier.x += r_increment;
+        _cb_color_multiplier_data.color_multiplier.y += g_increment;
+        _cb_color_multiplier_data.color_multiplier.z += b_increment;
+
+        if (_cb_color_multiplier_data.color_multiplier.x >= 1.0 || _cb_color_multiplier_data.color_multiplier.x <= 0.0)
+        {
+            _cb_color_multiplier_data.color_multiplier.x = _cb_color_multiplier_data.color_multiplier.x >= 1.0 ? 1.0 : 0.0;
+            r_increment = -r_increment;
+        }
+        if (_cb_color_multiplier_data.color_multiplier.y >= 1.0 || _cb_color_multiplier_data.color_multiplier.y <= 0.0)
+        {
+            _cb_color_multiplier_data.color_multiplier.y = _cb_color_multiplier_data.color_multiplier.y >= 1.0 ? 1.0 : 0.0;
+            g_increment = -g_increment;
+        }
+        if (_cb_color_multiplier_data.color_multiplier.z >= 1.0 || _cb_color_multiplier_data.color_multiplier.z <= 0.0)
+        {
+            _cb_color_multiplier_data.color_multiplier.z = _cb_color_multiplier_data.color_multiplier.z >= 1.0 ? 1.0 : 0.0;
+            b_increment = -b_increment;
+        }
+
+        // copy our ConstantBuffer instance to the mapped constant buffer resource
+        memcpy(_cb_color_multiplier_gpu_address[_frame_index], &_cb_color_multiplier_data, sizeof(_cb_color_multiplier_data));
     }
 
     void BraynzarConstantBuffers::on_render()
     {
+        _populate_command_list();
+
+        // Execute the command list.
+        ID3D12CommandList* command_lists[] = {_command_list.Get()};
+        _command_queue->ExecuteCommandLists(_countof(command_lists), command_lists);
+
+        // this command goes in at the end of our command queue. we will know when our command queue
+        // has finished because the fence value will be set to "fence_value" from the GPU since the command
+        // queue is being executed on the GPU
+        throw_if_failed(_command_queue->Signal(_fences[_frame_index].Get(), _fence_values[_frame_index]));
+
+        // Present the frame.
+        throw_if_failed(_swap_chain->Present(0, 0));
     }
 
     void BraynzarConstantBuffers::_load_pipeline(HWND hwnd)
@@ -121,29 +162,50 @@ namespace learn_d3d12
 
         throw_if_failed(_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&_command_queue)));
 
-        // Describe and create the swap chain.
-        DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {};
-        swap_chain_desc.BufferCount = kFrameCount;
-        swap_chain_desc.Width = width;
-        swap_chain_desc.Height = height;
-        swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        swap_chain_desc.SampleDesc.Count = 1;
+        DXGI_MODE_DESC back_buffer_desc = {};
+        back_buffer_desc.Width = width;
+        back_buffer_desc.Height = height;
+        back_buffer_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-        ComPtr<IDXGISwapChain1> swap_chain;
-        throw_if_failed(factory->CreateSwapChainForHwnd(
-            _command_queue.Get(),  // Swap chain needs the queue so that it can force a flush on it.
-            hwnd,
-            &swap_chain_desc,
-            nullptr,
-            nullptr,
-            &swap_chain));
+        DXGI_SAMPLE_DESC sample_desc = {};
+        sample_desc.Count = 1;
+
+        DXGI_SWAP_CHAIN_DESC swapchain_desc = {};
+        swapchain_desc.BufferCount = kFrameCount;
+        swapchain_desc.BufferDesc = back_buffer_desc;
+        swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        swapchain_desc.OutputWindow = hwnd;
+        swapchain_desc.SampleDesc = sample_desc;
+        swapchain_desc.Windowed = true;
+
+        ComPtr<IDXGISwapChain> temp_swap_chain;
+        factory->CreateSwapChain(_command_queue.Get(), &swapchain_desc, &temp_swap_chain);
+        throw_if_failed(temp_swap_chain.As(&_swap_chain));
+
+        // Describe and create the swap chain.
+        // DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = {};
+        // swap_chain_desc.BufferCount = kFrameCount;
+        // swap_chain_desc.Width = width;
+        // swap_chain_desc.Height = height;
+        // swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        // swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        // swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        // swap_chain_desc.SampleDesc.Count = 1;
+
+        // ComPtr<IDXGISwapChain1> swap_chain;
+        // throw_if_failed(factory->CreateSwapChainForHwnd(
+        //     _command_queue.Get(),  // Swap chain needs the queue so that it can force a flush on it.
+        //     hwnd,
+        //     &swap_chain_desc,
+        //     nullptr,
+        //     nullptr,
+        //     &swap_chain));
 
         // This sample does not support fullscreen transitions.
-        throw_if_failed(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
+        // throw_if_failed(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
 
-        throw_if_failed(swap_chain.As(&_swap_chain));
+        // throw_if_failed(swap_chain.As(&_swap_chain));
         _frame_index = _swap_chain->GetCurrentBackBufferIndex();
 
         // Create descriptor heaps.
@@ -306,10 +368,12 @@ namespace learn_d3d12
             pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                  // a default blent state.
             pso_desc.NumRenderTargets = 1;                                            // we are only binding one render target
             pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);   // a default depth stencil state
+            pso_desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
             throw_if_failed(_device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&_pipeline_state)));
         }
 
         // Create vertex buffer
+        ComPtr<ID3D12Resource> vertext_upload_buffer;
         {
             // A quad
             Vertex vertices_data[] = {
@@ -339,7 +403,6 @@ namespace learn_d3d12
             // we can give resource heaps a name so when we debug with the graphics debugger we know what resource we are looking at
             _vertex_buffer->SetName(L"Vertex Buffer Resource Heap");
 
-            ComPtr<ID3D12Resource> upload_buffer;
             CD3DX12_HEAP_PROPERTIES upload_buffer_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
             CD3DX12_RESOURCE_DESC upload_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(buffer_size);
             _device->CreateCommittedResource(
@@ -348,8 +411,8 @@ namespace learn_d3d12
                 &upload_buffer_desc,                // resource description for a buffer
                 D3D12_RESOURCE_STATE_GENERIC_READ,  // GPU will read from this buffer and copy its contents to the default heap
                 nullptr,
-                IID_PPV_ARGS(&upload_buffer));
-            upload_buffer->SetName(L"Vertex Buffer Upload Resource Heap");
+                IID_PPV_ARGS(&vertext_upload_buffer));
+            vertext_upload_buffer->SetName(L"Vertex Buffer Upload Resource Heap");
 
             // store vertex buffer in upload heap
             D3D12_SUBRESOURCE_DATA vertex_data = {};
@@ -359,7 +422,7 @@ namespace learn_d3d12
 
             // we are now creating a command with the command list to copy the data from
             // the upload heap to the default heap
-            UpdateSubresources(_command_list.Get(), _vertex_buffer.Get(), upload_buffer.Get(), 0, 0, 1, &vertex_data);
+            UpdateSubresources(_command_list.Get(), _vertex_buffer.Get(), vertext_upload_buffer.Get(), 0, 0, 1, &vertex_data);
 
             // transition the vertex buffer data from copy destination state to vertex buffer state
             CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(_vertex_buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -372,6 +435,7 @@ namespace learn_d3d12
         }
 
         // Create index buffer
+        ComPtr<ID3D12Resource> index_upload_buffer;
         {
             // a quad (2 triangles)
             DWORD indices_data[] = {
@@ -402,7 +466,6 @@ namespace learn_d3d12
             _index_buffer->SetName(L"Index Buffer Resource Heap");
 
             // create upload heap to upload index buffer
-            ComPtr<ID3D12Resource> upload_buffer;
             CD3DX12_HEAP_PROPERTIES upload_buffer_props = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
             CD3DX12_RESOURCE_DESC upload_buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(buffer_size);
             _device->CreateCommittedResource(
@@ -411,8 +474,8 @@ namespace learn_d3d12
                 &upload_buffer_desc,                // resource description for a buffer
                 D3D12_RESOURCE_STATE_GENERIC_READ,  // GPU will read from this buffer and copy its contents to the default heap
                 nullptr,
-                IID_PPV_ARGS(&upload_buffer));
-            upload_buffer->SetName(L"Index Buffer Upload Resource Heap");
+                IID_PPV_ARGS(&index_upload_buffer));
+            index_upload_buffer->SetName(L"Index Buffer Upload Resource Heap");
 
             // store vertex buffer in upload heap
             D3D12_SUBRESOURCE_DATA index_data = {};
@@ -422,7 +485,7 @@ namespace learn_d3d12
 
             // we are now creating a command with the command list to copy the data from
             // the upload heap to the default heap
-            UpdateSubresources(_command_list.Get(), _index_buffer.Get(), upload_buffer.Get(), 0, 0, 1, &index_data);
+            UpdateSubresources(_command_list.Get(), _index_buffer.Get(), index_upload_buffer.Get(), 0, 0, 1, &index_data);
 
             // transition the vertex buffer data from copy destination state to vertex buffer state
             CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(_index_buffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
@@ -465,6 +528,7 @@ namespace learn_d3d12
             _dsv_heap->SetName(L"Depth/Stencil Resource Heap");
 
             _device->CreateDepthStencilView(_depth_stencil_buffer.Get(), &depth_stencil_desc, _dsv_heap->GetCPUDescriptorHandleForHeapStart());
+            _depth_stencil_buffer->SetName(L"Depth Stencil Buffer");
         }
 
         // Create a constant buffer descriptor heap for each frame
@@ -526,9 +590,115 @@ namespace learn_d3d12
 
     void BraynzarConstantBuffers::_populate_command_list()
     {
+        // We have to wait for the gpu to finish with the command allocator before we reset it
+        _wait_for_previous_frame();
+
+        // we can only reset an allocator once the gpu is done with it
+        // resetting an allocator frees the memory that the command list was stored in
+        throw_if_failed(_command_allocators[_frame_index]->Reset());
+
+        // reset the command list. by resetting the command list we are putting it into
+        // a recording state so we can start recording commands into the command allocator.
+        // the command allocator that we reference here may have multiple command lists
+        // associated with it, but only one can be recording at any time. Make sure
+        // that any other command lists associated to this command allocator are in
+        // the closed state (not recording).
+        // Here you will pass an initial pipeline state object as the second parameter,
+        // but in this tutorial we are only clearing the rtv, and do not actually need
+        // anything but an initial default pipeline, which is what we get by setting
+        // the second parameter to NULL
+        throw_if_failed(_command_list->Reset(_command_allocators[_frame_index].Get(), _pipeline_state.Get()));
+
+        // here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
+
+        // transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
+        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(_render_targets[_frame_index].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        _command_list->ResourceBarrier(1, &barrier);
+
+        // here we again get the handle to our current render target view so we can set it as the render target in the output merger stage of the pipeline
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(_rtv_heap->GetCPUDescriptorHandleForHeapStart(), _frame_index, _rtv_descriptor_size);
+
+        // get a handle to the depth/stencil buffer
+        CD3DX12_CPU_DESCRIPTOR_HANDLE dsv_handle(_dsv_heap->GetCPUDescriptorHandleForHeapStart());
+
+        // set the render target for the output merger stage (the output of the pipeline)
+        _command_list->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
+
+        // Clear the render target by using the ClearRenderTargetView command
+        const float clear_color[] = {0.0f, 0.2f, 0.4f, 1.0f};
+        _command_list->ClearRenderTargetView(rtv_handle, clear_color, 0, nullptr);
+
+        // clear the depth/stencil buffer
+        _command_list->ClearDepthStencilView(_dsv_heap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+        // set root signature
+        _command_list->SetGraphicsRootSignature(_root_signature.Get());
+
+        // set constant buffer descriptor heap
+        ID3D12DescriptorHeap* descriptor_heaps[] = {_main_descriptor_heaps[_frame_index].Get()};
+        _command_list->SetDescriptorHeaps(_countof(descriptor_heaps), descriptor_heaps);
+
+        // set the root descriptor table 0 to the constant buffer descriptor heap
+        _command_list->SetGraphicsRootDescriptorTable(0, _main_descriptor_heaps[_frame_index]->GetGPUDescriptorHandleForHeapStart());
+
+        // draw triangle
+        _command_list->RSSetViewports(1, &_viewport);
+        _command_list->RSSetScissorRects(1, &_scissor_rect);
+        _command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        _command_list->IASetVertexBuffers(0, 1, &_vertex_buffer_view);
+        _command_list->IASetIndexBuffer(&_index_buffer_view);
+        _command_list->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
+        // transition the "_frame_index" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
+        // warning if present is called on the render target when it's not in the present state
+        auto after_barrier = CD3DX12_RESOURCE_BARRIER::Transition(_render_targets[_frame_index].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        _command_list->ResourceBarrier(1, &after_barrier);
+
+        throw_if_failed(_command_list->Close());
     }
 
     void BraynzarConstantBuffers::_wait_for_previous_frame()
     {
+        // swap the current rtv buffer index so we draw on the correct buffer
+        _frame_index = _swap_chain->GetCurrentBackBufferIndex();
+
+        // if the current fence value is still less than "_fence_value", then we know the GPU has not finished executing
+        // the command queue since it has not reached the "_command_queue->Signal(_fence, _fence_value)" command
+        if (_fences[_frame_index]->GetCompletedValue() < _fence_values[_frame_index])
+        {
+            // we have the fence create an event which is signaled once the fence's current value is "fence_value"
+            throw_if_failed(_fences[_frame_index]->SetEventOnCompletion(_fence_values[_frame_index], _fence_event));
+
+            // We will wait until the fence has triggered the event that it's current value has reached "fence_value". once it's value
+            // has reached "fence_value", we know the command queue has finished executing
+            WaitForSingleObject(_fence_event, INFINITE);
+        }
+
+        // increment fence value for next frame
+        _fence_values[_frame_index]++;
+    }
+
+    void BraynzarConstantBuffers::_debug_message_callback(D3D12_MESSAGE_CATEGORY category, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID message_id, const char* description, void* context)
+    {
+#if defined(_DEBUG)
+        switch (severity)
+        {
+            case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+                std::cerr << "[FATAL]" << description << std::endl;
+                break;
+            case D3D12_MESSAGE_SEVERITY_ERROR:
+                std::cerr << "[ERROR]" << description << std::endl;
+                break;
+            case D3D12_MESSAGE_SEVERITY_WARNING:
+                std::cerr << "[WARNING]" << description << std::endl;
+                break;
+            case D3D12_MESSAGE_SEVERITY_INFO:
+                std::cout << "[INFO]" << description << std::endl;
+                break;
+            case D3D12_MESSAGE_SEVERITY_MESSAGE:
+                std::cout << "[MESSAGE]" << description << std::endl;
+                break;
+        }
+#endif
     }
 }  // namespace learn_d3d12
